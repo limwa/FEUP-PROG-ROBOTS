@@ -4,7 +4,8 @@ project(robots VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-add_executable(robots main.cpp utils.cpp)
+add_executable(robots src/main.cpp src/utils.cpp src/entities.cpp)
+include_directories(robots include/)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
