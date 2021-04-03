@@ -345,7 +345,7 @@ namespace timer {
     }
 } // namespace timer
 
-namespace game {
+namespace mazes {
 
     /**
      * @brief Returns whether or not a cell has something dead in it.
@@ -354,7 +354,7 @@ namespace game {
      * @return true, if the cell has something dead in it, or false, otherwise.
      */
     bool is_cell_dead(unsigned int value) {
-        return value & game::masks::DEAD;
+        return value & mazes::masks::DEAD;
     }
 
     /**
@@ -364,7 +364,7 @@ namespace game {
      * @return true, if the cell has a human in it, or false, otherwise.
      */
     bool is_cell_human(unsigned int value) {
-        return value & game::masks::HUMAN;
+        return value & mazes::masks::HUMAN;
     }
 
     /**
@@ -374,7 +374,7 @@ namespace game {
      * @return true, if the cell has a robot in it, or false, otherwise.
      */
     bool is_cell_robot(unsigned int value) {
-        return value & game::masks::ROBOT;
+        return value & mazes::masks::ROBOT;
     }
 
     /**
@@ -384,7 +384,7 @@ namespace game {
      * @return true, if the cell has a barrier in it, or false, otherwise.
      */
     bool is_cell_barrier(unsigned int value) {
-        return value & game::masks::BARRIER;
+        return value & mazes::masks::BARRIER;
     }
 
     /**
@@ -395,16 +395,16 @@ namespace game {
      * @return The character representing the value present in a given cell.
      */
     char translate_from_cell_value(unsigned int value) {
-        if (value & game::masks::BARRIER)
+        if (value & mazes::masks::BARRIER)
             return '*';
 
-        if (value & game::masks::HUMAN)
+        if (value & mazes::masks::HUMAN)
             if (is_cell_dead(value))
                 return 'h';
             else
                 return 'H';
 
-        if (value & game::masks::ROBOT)
+        if (value & mazes::masks::ROBOT)
             if (is_cell_dead(value))
                 return 'r';
             else
@@ -423,16 +423,16 @@ namespace game {
     unsigned int translate_to_cell_value(char value) {
         switch (value) {
             case '*':
-                return game::masks::BARRIER;
+                return mazes::masks::BARRIER;
 
             case 'H':
-                return game::masks::HUMAN;
+                return mazes::masks::HUMAN;
 
             case 'R':
-                return game::masks::ROBOT;
+                return mazes::masks::ROBOT;
 
             case ' ':
-                return game::EMPTY;
+                return mazes::EMPTY;
 
             default:
                 throw "The provided character is invalid";
@@ -446,24 +446,35 @@ namespace game {
         return x + y * width;
     }
 
-    size_t get_cell_index(game::Map &map, size_t x, size_t y) {
-        return get_cell_index(map.width, map.height, x, y);
+    size_t get_cell_index(const mazes::Maze &maze, size_t x, size_t y) {
+        return get_cell_index(maze.width, maze.height, x, y);
     }
 
-    unsigned int& get_cell_value_at(game::Map &map, size_t x, size_t y) {
-        return map.cells[get_cell_index(map, x, y)];
+    unsigned int& get_cell_value_at(const mazes::Maze &maze, size_t x, size_t y) {
+        return maze.cells[get_cell_index(maze, x, y)];
     }
 
     /**
-     * @brief Returns whether or not a map number is valid.
+     * @brief Returns whether or not a maze number is valid.
      * 
-     * @param map A map number.
-     * @return true, if the map number is valid, or false, otherwise.
+     * @param maze A maze number.
+     * @return true, if the maze number is valid, or false, otherwise.
      */
-    bool is_map_number_valid(unsigned int map) {
-        return map < 100;
+    bool is_maze_number_valid(unsigned int maze) {
+        return maze < 100;
     }
-} // namespace map
+
+    void show_maze(const mazes::Maze &maze) {
+        for (int i = 0; i < maze.width * maze.height; i++) {
+            if (i % maze.width == 0)
+                cout << '\n';
+
+            cout << mazes::translate_from_cell_value(maze.cells[i]);
+        }
+
+        cout << endl;
+    }
+} // namespace mazes
 
 namespace files {
     
@@ -474,7 +485,7 @@ namespace files {
      * @return The name of the file containing the given maze.
      */
     string get_maze_file_name(unsigned int number) {
-        if (!game::is_map_number_valid(number))
+        if (!mazes::is_maze_number_valid(number))
             throw "The provided maze number is invalid";
 
         string file_name = utf8::zfill(to_string(number), '0', 2, true);
@@ -488,7 +499,7 @@ namespace files {
      * @return The name of the file containing the given maze's winners.
      */
     string get_maze_winners_file_name(unsigned int number) {
-        if (!game::is_map_number_valid(number))
+        if (!mazes::is_maze_number_valid(number))
             throw "The provided maze number is invalid.";
 
         string file_name = utf8::zfill(to_string(number), '0', 2, true);
@@ -527,46 +538,50 @@ namespace files {
         return file;
     }
 
-    game::Map read_map(unsigned int map) {
-        ifstream file = files::open_file_reader(files::get_maze_file_name(map));
+    mazes::Maze read_maze(unsigned int maze) {
+        ifstream file = files::open_file_reader(files::get_maze_file_name(maze));
 
         char sep;
         size_t width, height;
         file >> width >> sep >> height;
-        if (sep != 'x')
+        if (sep != 'x' || width == 0 || height == 0 || cin.bad())
             throw "The given file does not fulfill the expected format";
 
         unsigned int* cells = (unsigned int*) malloc(width * height * sizeof(unsigned int)); £;//TODO: free(cells); !!!!!!!!!!!!!!!!!
         
-        game::Player player;
+        mazes::Player player;
         bool has_found_player = false;
 
-        vector<game::Robot> robots;
+        vector<mazes::Robot> robots;
         
         char ch;
         size_t index = 0;
         while (cin.get(ch)) {
             if (ch == '\n') {
-                if (index % width != 0)
+                if (index % width != 0) {
+                    free(cells);
                     throw "The given file does not fulfill the expected format";
+                }
 
                 continue;
             }
 
-            unsigned int value = game::translate_to_cell_value(ch);
+            unsigned int value = mazes::translate_to_cell_value(ch);
 
             size_t x = index % width;
             size_t y = index / width;
 
-            if (game::is_cell_human(value)) {
+            if (mazes::is_cell_human(value)) {
                 if (!has_found_player) {
                     player.x = x;
                     player.y = y;
 
                     has_found_player = true;
-                } else 
+                } else {
+                    free(cells);
                     throw "The given file does not fulfill the expected format";
-            } else if (game::is_cell_robot(value)) {
+                }
+            } else if (mazes::is_cell_robot(value)) {
                 robots.push_back({
                     robots.size() + 1, // Robot IDs start at 1
                     x, y
@@ -576,14 +591,16 @@ namespace files {
             cells[index++] = value;
         }
 
-        if (index < width * height)
+        if (index < width * height) {
+            free(cells);
             throw "The given file does not fulfill the expected format";
+        }
 
         file.close();
         return { width, height, cells, player, robots };
     }
 
-    bool save_score(unsigned int map, string player_name, time_t player_score) {
+    void save_maze_score(unsigned int maze, string player_name, time_t player_score) {
         static const string HEADER1 = "Player          - Time";
         static const string HEADER2 = "----------------------";
 
@@ -593,7 +610,7 @@ namespace files {
         };
 
         vector<Score> scores;
-        string winners_file_name = files::get_maze_winners_file_name(map);
+        string winners_file_name = files::get_maze_winners_file_name(maze);
 
         // Read scores from file
         try {
@@ -629,7 +646,7 @@ namespace files {
         });
 
         // Write ordered scores to file
-        ofstream file_writer = open_file_writer(winners_file_name); 
+        ofstream file_writer = files::open_file_writer(winners_file_name); 
 
         file_writer << HEADER1 << '\n'
                     << HEADER2 << '\n';
@@ -643,161 +660,168 @@ namespace files {
 
         file_writer << flush;
         file_writer.close();
-
-        return true;
     }
 } // namespace files
 
-// bool loadMap(unsigned int &number, vector<vector<char>> &result) {  // Validates map number choice
-//     result.clear();
+namespace logic {
+    void get_deltas_from_direction(const char direction, int &dx, int &dy) {  // Gets direction through vector coordinates
+        switch (direction) {
+            case 'Q':
+                dx = -1;
+                dy = -1;
+                break;
 
-//     function<bool(unsigned int)> fun = [&result] (unsigned int res) {
-//         if (res == 0)
-//             return true;
+            case 'W':
+                dx = 0;
+                dy = -1;
+                break;
 
-//         if (res >= 100)
-//             throw "Please specify a number between 1 and 99";
+            case 'E':
+                dx = 1;
+                dy = -1;
+                break;
 
-//         if (!readMap(res, result))
-//             throw "A map with that number does not exist";
-
-//         return true; 
-//     };
-    
-//     bool success = input::read_value(
-//         "Please select a map to play on (0 to return to menu): ",
-//         "Please specify a number",
-//         number,
-//         fun
-//     );
-
-//     cout << endl;
-//     return success;
-// }
-
-// bool get_deltas_from_direction(char direction, int &dx, int &dy) {  // Gets direction through vector coordinates
-//     switch (direction) {
-//         case 'Q':
-//             dx = -1;
-//             dy = -1;
-//             break;
-
-//         case 'W':
-//             dx = 0;
-//             dy = -1;
-//             break;
-
-//         case 'E':
-//             dx = 1;
-//             dy = -1;
-//             break;
-
-//         case 'A':
-//             dx = -1;
-//             dy = 0;
-//             break;
-            
-//         case 'S':
-//             dx = 0;
-//             dy = 0;
-//             break;
-
-//         case 'D':
-//             dx = 1;
-//             dy = 0;
-//             break;
-
-//         case 'Z':
-//             dx = -1;
-//             dy = 1;
-//             break;
-
-//         case 'X':
-//             dx = 0;
-//             dy = 1;
-//             break;
-
-//         case 'C':
-//             dx = 1;
-//             dy = 1;
-//             break;
-
-//         default:
-//             return false;
-//     }
-
-//     return true;
-// }
-
-// bool playGame() {
-//     Map map;  // Defined in entities.h as the vector cointaining the game's map
-//     unsigned int map_number;
-//     if (!loadMap(map_number, map))
-//         return false;
-
-//     if (map_number == 0)
-//         return true;
-
-//     Player player;  // Struct defining the player's status
-//     vector<Robot> robots;  // Vector that will store all robots present in the map
-
-//     for (size_t i = 0; i < map.size(); i++) {
-//         vector<char> line = map.at(i);  // Defining a vector for each line in map
-//         for (size_t j = 0; j < line.size(); j++) {
-//             char character = line.at(j);  
-
-//             switch (character) {
-//                 case 'R':
-//                     robots.push_back({
-//                         static_cast<unsigned int> (robots.size() + 1),  // Increasing vector size if robot is found
-//                         static_cast<int> (j),
-//                         static_cast<int> (i),
-//                         true
-//                     });
-//                     break;
+            case 'A':
+                dx = -1;
+                dy = 0;
+                break;
                 
-//                 case 'H':
-//                     player = { static_cast<int> (j), static_cast<int> (i), true };  // Assigning position and status to player struct
-//                     break;
+            case 'S':
+                dx = 0;
+                dy = 0;
+                break;
 
-//                 default:
-//                     break;
-//             }          
-//         }
-//     }
+            case 'D':
+                dx = 1;
+                dy = 0;
+                break;
 
-//     game_timer(true);  // Starts timer
-//     while (true) {
-//         input::clear_screen();
-//         for (size_t i = 0; i < map.size(); i++) {  // Prints map to the console
-//             vector<char> line = map.at(i);
-//             for (size_t j = 0; j < line.size(); j++) {
-//                 char ch = line.at(j);
-//                 cout << ch;
-//             }
-//             cout << endl;
-//         }
+            case 'Z':
+                dx = -1;
+                dy = 1;
+                break;
 
-//         cout << endl;
+            case 'X':
+                dx = 0;
+                dy = 1;
+                break;
 
-//         char letter;
-//         int dx, dy;
-//         bool is_not_eof = input::read_value(  // Validates player's move
-//             "Your move: ",
-//             "Your move must be one of Q, A, Z, W, S, X, E, D, or C",
-//             letter,
-//             [player, &map, &dx, &dy] (auto res) {
-//                 if(!get_deltas_from_direction(toupper(res), dx, dy) || !is_move_valid(player, map, dx, dy))
-//                     throw "Your move must be one of Q, A, Z, W, S, X, E, D, or C AND must be a valid move";
+            case 'C':
+                dx = 1;
+                dy = 1;
+                break;
 
-//                 return true;
-//             }
-//         );
+            default:
+                throw "The given direction is invalid";
+        }
+    }
 
-//         cout << endl;
+    namespace player {
+        bool is_move_valid(const mazes::Maze &maze, const int dx, const int dy) {
+            if (dx < -1 || dx > 1 || dy < -1 || dy > 1)
+                return false;
 
-//         if (!is_not_eof)
-//             return false;
+            if (mazes::is_cell_dead(mazes::get_cell_value_at(maze, maze.player.x, maze.player.y)))
+                return false;
+
+            int new_x = maze.player.x + dx;
+            int new_y = maze.player.y + dy;
+            if (new_x < 0 || new_y < 0 || new_x >= maze.width || new_y >= maze.height)
+                return false;
+
+            unsigned int value = mazes::get_cell_value_at(maze, new_x, new_y);
+            if (mazes::is_cell_robot(value) || mazes::is_cell_barrier(value))
+                return false;
+
+            return true;    
+        }
+
+        bool is_move_valid(const mazes::Maze &maze, char direction) {
+            int dx, dy;
+            logic::get_deltas_from_direction(direction, dx, dy);
+
+            return logic::player::is_move_valid(maze, dx, dy);
+        }
+    } // namespace player
+    
+
+    
+
+} // namespace logic
+
+mazes::Maze ask_maze() {
+    mazes::Maze maze;
+
+    unsigned int number;
+    bool is_successful = keyboard::read_value(
+        "Please select a maze to play on (0 to return to menu): ",
+        "Please specify a number between 0 and 99",
+        number,
+        [&maze] (auto res) {
+            if (res >= 100)
+                return false;
+
+            if (res == 0)
+                return true;
+
+            maze = files::read_maze(res);
+            return true;
+        }
+    );
+
+    cout << endl;
+
+    if (number == 0)
+        throw true;
+
+    if (!is_successful)
+        throw false;
+
+    return maze;
+}
+
+char ask_move(const mazes::Maze &maze) {
+
+    char letter;
+    bool is_successful = keyboard::read_value(
+        "Your move: ",
+        "Your move must be one of Q, A, Z, W, S, X, E, D, or C",
+        letter,
+        [&maze] (auto res) {
+            if (!logic::player::is_move_valid(maze, res))
+                throw "Uh oh, that move seems invalid";
+
+            return true;
+        }
+    );
+
+    if (!is_successful)
+        throw false;
+
+    return letter;
+}
+
+void play_game() {
+    mazes::Maze maze = ask_maze();
+    timer::start();
+
+    try {
+        while (true) {
+            screen::clear();
+            mazes::show_maze(maze);
+
+            char move = ask_move(maze);
+            cout << endl;
+
+
+        }
+
+        throw true;
+    } catch (bool ex) {
+        free(maze.cells);
+        throw ex;
+    }
+}
 
 //         map.at(player.y)[player.x] = ' ';  // Replaces previous place with empty space
 //         move(player, map, dx, dy);

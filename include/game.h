@@ -144,7 +144,7 @@ namespace timer {
     time_t stop();
 } // namespace timer
 
-namespace game {
+namespace mazes {
     namespace masks {
 
         /**
@@ -192,9 +192,9 @@ namespace game {
     };
 
     /**
-     * @brief Represents a game map.
+     * @brief Represents a game maze.
      */
-    struct Map {
+    struct Maze {
         size_t width;
         size_t height;
         unsigned int* cells;
@@ -254,17 +254,17 @@ namespace game {
     unsigned int translate_to_cell_value(char value);
     
     size_t get_cell_index(size_t width, size_t height, size_t x, size_t y);
-    size_t get_cell_index(game::Map &map, size_t x, size_t y);
-    unsigned int& get_cell_value_at(game::Map &map, size_t x, size_t y);
+    size_t get_cell_index(mazes::Maze &maze, size_t x, size_t y);
+    unsigned int& get_cell_value_at(mazes::Maze &maze, size_t x, size_t y);
 
     /**
-     * @brief Returns whether or not a map number is valid.
+     * @brief Returns whether or not a maze number is valid.
      * 
-     * @param map A map number.
-     * @return true, if the map number is valid, or false, otherwise.
+     * @param maze A maze number.
+     * @return true, if the maze number is valid, or false, otherwise.
      */
-    bool is_map_number_valid(unsigned int map);
-}
+    bool is_maze_number_valid(unsigned int maze);
+} // namespace mazes
 
 namespace files {
     
@@ -301,11 +301,9 @@ namespace files {
      * @return An open stream to the given file.
      */
     ofstream open_file_writer(string file_name);
-
-    game::Map read_map(unsigned int map);
-    bool save_score(unsigned int map, string player_name, time_t player_score);
-
     
+    mazes::Maze read_maze(unsigned int maze);
+    void save_score(unsigned int maze, string player_name, time_t player_score);
 } // namespace files
 
 #endif
