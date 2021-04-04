@@ -1,4 +1,6 @@
 #include <iostream>
+#include "keyboard.h"
+#include "info.h"
 #include "game.h"
 
 using namespace std;
