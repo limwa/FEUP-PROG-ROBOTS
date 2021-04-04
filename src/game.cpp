@@ -50,7 +50,14 @@ char ask_move(const mazes::Maze &maze) {
         "Your move must be one of Q, A, Z, W, S, X, E, D, or C",
         letter,
         [&maze] (auto res) {
-            if (!logic::player::is_move_valid(maze, res))
+            bool is_move_valid;
+            try {
+                is_move_valid = logic::player::is_move_valid(maze, res);
+            } catch (const char *exception) {
+                return false;
+            }
+
+            if (!is_move_valid)
                 throw "Uh oh, that move seems invalid";
 
             return true;
