@@ -1,12 +1,14 @@
 #include <fstream>
+// #include <iostream>
 #include <string>
 #include <iomanip>
 #include <bits/stdc++.h>
 #include <exception>
 #include <stdio.h>
 #include <unistd.h>
-#include "entities.h"
 #include "game.h"
+
+using namespace std;
 
 namespace info {
 
@@ -180,7 +182,7 @@ namespace keyboard {
      * @brief Auxiliary function.
      */
     template <typename T>
-    inline bool read_value_adaptive(const string prompt, const string warning, T &result, const function<bool(T)> validator) {
+    inline bool read_value_adaptive(const string prompt, const string warning, T &result, const function<bool(T)> validator = [] (T res) { return true; }) {
         if (isatty(fileno(stdin)) && isatty(fileno(stdout)))
             return read_value_interactive<T>(prompt, warning, result, validator);
         
@@ -454,6 +456,10 @@ namespace mazes {
         return maze.cells[get_cell_index(maze, x, y)];
     }
 
+    unsigned int& get_cell_value_at_player_position(const mazes::Maze &maze) {
+        return get_cell_value_at(maze, maze.player.x, maze.player.y);
+    }
+
     /**
      * @brief Returns whether or not a maze number is valid.
      * 
@@ -547,7 +553,7 @@ namespace files {
         if (sep != 'x' || width == 0 || height == 0 || cin.bad())
             throw "The given file does not fulfill the expected format";
 
-        unsigned int* cells = (unsigned int*) malloc(width * height * sizeof(unsigned int)); £;//TODO: free(cells); !!!!!!!!!!!!!!!!!
+        unsigned int* cells = (unsigned int*) malloc(width * height * sizeof(unsigned int));//TODO: free(cells); !!!!!!!!!!!!!!!!!
         
         mazes::Player player;
         bool has_found_player = false;
@@ -597,7 +603,7 @@ namespace files {
         }
 
         file.close();
-        return { width, height, cells, player, robots };
+        return { maze, width, height, cells, player, robots };
     }
 
     void save_maze_score(unsigned int maze, string player_name, time_t player_score) {
@@ -606,7 +612,7 @@ namespace files {
 
         struct Score {
             string name; 
-            int score;
+            time_t score;
         };
 
         vector<Score> scores;
@@ -721,7 +727,7 @@ namespace logic {
             if (dx < -1 || dx > 1 || dy < -1 || dy > 1)
                 return false;
 
-            if (mazes::is_cell_dead(mazes::get_cell_value_at(maze, maze.player.x, maze.player.y)))
+            if (mazes::is_cell_dead(mazes::get_cell_value_at_player_position(maze)))
                 return false;
 
             int new_x = maze.player.x + dx;
@@ -742,9 +748,96 @@ namespace logic {
 
             return logic::player::is_move_valid(maze, dx, dy);
         }
+
+        void move(mazes::Maze &maze, int dx, int dy) {
+            if (!logic::player::is_move_valid(maze, dx, dy))
+                throw "The provided move is not valid";
+
+            int new_x = maze.player.x + dx;
+            int new_y = maze.player.y + dy;
+
+            mazes::get_cell_value_at_player_position(maze) &= ~mazes::masks::HUMAN;
+            
+            maze.player.x = new_x;
+            maze.player.y = new_y;
+
+            mazes::get_cell_value_at_player_position(maze) |= mazes::masks::HUMAN;
+        }
+
+        void move(mazes::Maze &maze, char direction) {
+            int dx, dy;
+            logic::get_deltas_from_direction(direction, dx, dy);
+
+            logic::player::move(maze, dx, dy);
+        }
     } // namespace player
     
+    namespace robot {
+        
+        void get_suggested_deltas(const mazes::Maze &maze, const mazes::Robot &robot, int &dx, int &dy) {
+            int delta_x = maze.player.x - robot.x;
+            int delta_y = maze.player.y - robot.y;
 
+            if (delta_x > 0)
+                dx = 1;
+            else if (delta_x < 0)
+                dx = -1;
+            else
+                dx = 0;
+
+            if (delta_y > 0)
+                dy = 1;
+            else if (delta_x < 0)
+                dy = -1;
+            else
+                dy = 0;
+        }
+
+        void move(mazes::Maze &maze, mazes::Robot &robot) {
+            int dx, dy;
+            logic::robot::get_suggested_deltas(maze, robot, dx, dy);
+
+            int new_x = robot.x + dx;
+            int new_y = robot.y + dy;
+            if (new_x < 0 || new_x >= maze.width)
+                new_x = robot.x;
+
+            if (new_y < 0 || new_y >= maze.height)
+                new_y = robot.y;
+
+            unsigned int &current_value = mazes::get_cell_value_at(maze, robot.x, robot.y);
+            unsigned int &new_value = mazes::get_cell_value_at(maze, new_x, new_y);
+
+            if (mazes::is_cell_dead(current_value))
+                return;
+
+            if (mazes::is_cell_barrier(new_value)) {
+                if (!mazes::is_cell_dead(new_value)) { // If the barrier is powered
+                    current_value |= mazes::masks::DEAD; // Kill robot
+                    new_value |= mazes::masks::DEAD; // Make barrier unpowered
+                }
+            } else if (mazes::is_cell_robot(new_value)) {
+                if (mazes::is_cell_dead(new_value)) { // If the robot in the new position is dead
+                    current_value |= mazes::masks::DEAD;
+                } else { // If the robot in the new position is alive
+                    current_value &= ~mazes::masks::ROBOT; // Move the robot
+                    new_value |= mazes::masks::DEAD; // Kill both robots;
+
+                    robot.x = new_x;
+                    robot.y = new_y;
+                }
+            } else if (mazes::is_cell_human(new_value)) {
+                new_value |= mazes::masks::DEAD;
+            } else {
+                current_value &= ~mazes::masks::ROBOT; // Move the robot
+                new_value |= mazes::masks::ROBOT;
+
+                robot.x = new_x;
+                robot.y = new_y;
+            }
+        }        
+    } // namespace robot
+    
     
 
 } // namespace logic
@@ -801,11 +894,45 @@ char ask_move(const mazes::Maze &maze) {
     return letter;
 }
 
+struct Name {
+    string data;
+};
+
+std::basic_istream<char>& operator>>(std::basic_istream<char>& istream, Name &name) {
+    name.data.clear();
+    
+    char ch;
+    while ((istream.peek() != '\n' && istream.get(ch)) && utf8::length(name.data) < 15)
+        name.data.push_back(ch);
+
+    return istream;
+}
+
+std::basic_ostream<char>& operator<<(std::basic_ostream<char>& ostream, Name &name) {
+    return ostream << name.data;
+}
+
+string ask_name() {
+    Name name = { string() };
+
+    bool is_successful = keyboard::read_value_adaptive<Name>(
+        "Well done, champion! What's your name? ",
+        "The provided name must have less than 15 characters",
+        name
+    );
+
+    if (!is_successful)
+        throw false;
+
+    return name.data;
+}
+
 void play_game() {
     mazes::Maze maze = ask_maze();
     timer::start();
 
     try {
+        bool has_player_won;
         while (true) {
             screen::clear();
             mazes::show_maze(maze);
@@ -813,93 +940,55 @@ void play_game() {
             char move = ask_move(maze);
             cout << endl;
 
+            logic::player::move(maze, move);
 
+            for (auto robot : maze.robots) {
+                logic::robot::move(maze, robot);
+            }
+
+            if (mazes::is_cell_dead(mazes::get_cell_value_at_player_position(maze))) {
+                has_player_won = false;
+                break;
+            }
+
+            bool are_robots_alive = false;
+            for (auto robot : maze.robots) {
+                if (!mazes::is_cell_dead(mazes::get_cell_value_at(maze, robot.x, robot.y))) {
+                    are_robots_alive = true;
+                    break;
+                }
+            }
+
+            if (!are_robots_alive) {
+                has_player_won = true;
+                break;
+            }
         }
 
-        throw true;
+        time_t score = timer::stop();
+
+        screen::clear();
+        mazes::show_maze(maze);
+
+        if (has_player_won) {
+            cout << "You won :)\n"
+                 << "Congratulations! You finished the game in " << score << " seconds!" << endl;
+        } else {
+            cout << "You lost :(" << endl;
+        }
+
+        cout << endl;
+        keyboard::wait_for_enter();
+
+        if (!has_player_won)
+            return;
+
+        string name = ask_name();
+        files::save_maze_score(maze.id, name, score);
+
+        throw true; // Make sure to free memory and restart game
     } catch (bool ex) {
         free(maze.cells);
         throw ex;
     }
 }
-
-//         map.at(player.y)[player.x] = ' ';  // Replaces previous place with empty space
-//         move(player, map, dx, dy);
-
-//         for (size_t i = 0; i < robots.size(); i++) {
-//             Robot &robot = robots.at(i);
-
-//             switch (move(robot, map, get_robot_dx(robot, player), get_robot_dy(robot, player))) {  // Moves every robot independently in order
-//                                                                                                    //Returns 1, 2 or 3 depending on the outcome
-//                 case 2:  // Robot colided with another robot, creating a stump
-//                     for (size_t j = 0; j < robots.size(); j++) {
-//                         if (i == j)  // Checking robot's id is not his own
-//                             continue;
-
-//                         Robot &another_robot = robots.at(j);
-//                         if (robot.x == another_robot.x && robot.y == another_robot.y)
-//                             another_robot.alive = false;
-//                     }
-
-//                     break;
-
-//                 case 3:  // Robot colided with player
-//                     player.alive = false;  // Player's status becomes dead
-//                     break;
-
-//                 default:
-//                     break;
-//             }
-//         }
-
-//         map.at(player.y)[player.x] = (player.alive ? 'H' : 'h');  // Replacing player with "h" if dead
-
-//         if (!player.alive)  // Ending game when player dies
-//             break;
-
-//         bool has_game_ended = true;
-//         for (auto robot : robots) {
-//             if (robot.alive)  // Checking if there are robots alive; if so (and player's not dead), game will not end
-//                 has_game_ended = false;
-//         }
-
-//         if (has_game_ended)
-//             break;
-//     }
-
-//     time_t score = game_timer(false);  // Timestamping game's end
-
-//     input::clear_screen();
-//     for (size_t i = 0; i < map.size(); i++) { // Displays last game frame
-//         vector<char> line = map.at(i);
-//         for (size_t j = 0; j < line.size(); j++) {
-//             char ch = line.at(j);
-//             cout << ch;
-//         }
-//         cout << endl;
-//     }
-
-//     cout << endl;
-    
-//     if (player.alive) {
-//         cout << "You won :)" << endl;
-//         cout << "You finished the game in " << score << " seconds" << endl;
-//     } else {
-//         cout << "You lost :(" << endl;
-//     }
-    
-//     cout << endl;
-//     input::wait_for_enter();
-
-//     if (!player.alive)
-//         return true;
-
-//     input::Name name_struct;
-//     if (!input::read_value("Well done, champion! What's your name? ", "Please specify your name (must have 15 characters or less)", name_struct))
-//         return false;
-
-//     string name = name_struct.name;
-
-//     saveScore(name, score, map_number);
-//     return true;
-// }

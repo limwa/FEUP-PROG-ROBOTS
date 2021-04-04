@@ -1,9 +1,4 @@
-#include <fstream>
-#include <string>
-#include <iomanip>
-#include <bits/stdc++.h>
-#include <exception>
-#include "entities.h"
+#include <iostream>
 #include "game.h"
 
 using namespace std;
@@ -39,10 +34,14 @@ int main(int, char**) {
                 break;
                 
             case 2:  // Starts game sequence
-                // if (!playGame()) {
-                //     info::bye();
-                //     return 1;
-                // }
+                try {
+                    play_game();
+                } catch (bool ex) {
+                    if (!ex) {
+                        info::bye();
+                        return 1;
+                    }
+                }
                 break;
 
             default:

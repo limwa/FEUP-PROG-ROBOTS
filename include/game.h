@@ -3,6 +3,7 @@
 
 #include <string>
 #include <functional>
+#include <vector>
 
 namespace info {
 
@@ -90,7 +91,7 @@ namespace utf8 {
      * @param s the string whose UTF8 length is to be returned.
      * @return The number of UTF8 code points present in the given string.
      */
-    size_t length(const string str);
+    size_t length(const std::string str);
 
     /**
      * @brief Adds filler characters until the given string has the specified length.
@@ -195,12 +196,14 @@ namespace mazes {
      * @brief Represents a game maze.
      */
     struct Maze {
+        unsigned int id;
+
         size_t width;
         size_t height;
         unsigned int* cells;
         
         Player player;
-        vector<Robot> robots;
+        std::vector<mazes::Robot> robots;
     };
 
     /**
@@ -274,7 +277,7 @@ namespace files {
      * @param number The number of the maze.
      * @return The name of the file containing the given maze.
      */
-    string get_maze_file_name(unsigned int number);
+    std::string get_maze_file_name(unsigned int number);
 
     /**
      * @brief Returns the name of the file containing the given maze's winners.
@@ -282,7 +285,7 @@ namespace files {
      * @param number The number of the maze.
      * @return The name of the file containing the given maze's winners.
      */
-    string get_maze_winners_file_name(unsigned int number);
+    std::string get_maze_winners_file_name(unsigned int number);
 
     /**
      * @brief Opens the given file for reading.
@@ -291,7 +294,7 @@ namespace files {
      * @param file_name The name of the file. 
      * @return An open stream to the given file.
      */
-    ifstream open_file_reader(string file_name);
+    std::ifstream open_file_reader(std::string file_name);
 
     /**
      * @brief Opens the given file for writing.
@@ -300,10 +303,12 @@ namespace files {
      * @param file_name The name of the file. 
      * @return An open stream to the given file.
      */
-    ofstream open_file_writer(string file_name);
+    std::ofstream open_file_writer(std::string file_name);
     
     mazes::Maze read_maze(unsigned int maze);
-    void save_score(unsigned int maze, string player_name, time_t player_score);
+    void save_score(unsigned int maze, std::string player_name, time_t player_score);
 } // namespace files
+
+void play_game();
 
 #endif
