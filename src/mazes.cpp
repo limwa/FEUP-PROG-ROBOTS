@@ -99,6 +99,15 @@ namespace mazes {
         }
     }
 
+    /**
+     * @brief Gets the index of the cell at (x, y).
+     * 
+     * @param width The maze's width.
+     * @param height The maze's height.
+     * @param x The horizontal position.
+     * @param y The vertical position.
+     * @return The cell's index.
+     */
     size_t get_cell_index(size_t width, size_t height, size_t x, size_t y) {
         if (x >= width || y >= height)
             throw "The provided coordinates are invalid";
@@ -106,14 +115,36 @@ namespace mazes {
         return x + y * width;
     }
 
+    /**
+     * @brief Gets the index of the cell at (x, y).
+     * 
+     * @param maze The maze the player is playing on.
+     * @param x The horizontal position.
+     * @param y The vertical position.
+     * @return The cell's index.
+     */
     size_t get_cell_index(const mazes::Maze &maze, size_t x, size_t y) {
         return get_cell_index(maze.width, maze.height, x, y);
     }
 
+    /**
+     * @brief Returns the value of the cell at (x, y), by reference.
+     * 
+     * @param maze The maze the player is playing on.
+     * @param x The horizontal position.
+     * @param y The vertical position.
+     * @return A reference to the cell's value.
+     */
     unsigned int& get_cell_value_at(const mazes::Maze &maze, size_t x, size_t y) {
         return maze.cells[get_cell_index(maze, x, y)];
     }
 
+    /**
+     * @brief Returns the value of the cell at the player's position, by reference.
+     * 
+     * @param maze The maze the player is playing on.
+     * @return A reference to the cell's value.
+     */
     unsigned int& get_cell_value_at_player_position(const mazes::Maze &maze) {
         return get_cell_value_at(maze, maze.player.x, maze.player.y);
     }
@@ -128,6 +159,11 @@ namespace mazes {
         return maze < 100;
     }
 
+    /**
+     * @brief Displays the maze the player is playing on.
+     * 
+     * @param maze The maze the player is playing on.
+     */
     void show_maze(const mazes::Maze &maze) {
         for (int i = 0; i < maze.width * maze.height; i++) {
             if (i % maze.width == 0)

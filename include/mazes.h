@@ -116,12 +116,43 @@ namespace mazes {
      */
     unsigned int translate_to_cell_value(char value);
 
+    /**
+     * @brief Gets the index of the cell at (x, y).
+     * 
+     * @param width The maze's width.
+     * @param height The maze's height.
+     * @param x The horizontal position.
+     * @param y The vertical position.
+     * @return The cell's index.
+     */
     size_t get_cell_index(size_t width, size_t height, size_t x, size_t y);
 
+    /**
+     * @brief Gets the index of the cell at (x, y).
+     * 
+     * @param maze The maze the player is playing on.
+     * @param x The horizontal position.
+     * @param y The vertical position.
+     * @return The cell's index.
+     */
     size_t get_cell_index(const mazes::Maze &maze, size_t x, size_t y);
 
+    /**
+     * @brief Returns the value of the cell at (x, y), by reference.
+     * 
+     * @param maze The maze the player is playing on.
+     * @param x The horizontal position.
+     * @param y The vertical position.
+     * @return A reference to the cell's value.
+     */
     unsigned int& get_cell_value_at(const mazes::Maze &maze, size_t x, size_t y);
 
+    /**
+     * @brief Returns the value of the cell at the player's position, by reference.
+     * 
+     * @param maze The maze the player is playing on.
+     * @return A reference to the cell's value.
+     */
     unsigned int& get_cell_value_at_player_position(const mazes::Maze &maze);
 
     /**
@@ -132,6 +163,11 @@ namespace mazes {
      */
     bool is_maze_number_valid(unsigned int maze);
 
+    /**
+     * @brief Displays the maze the player is playing on.
+     * 
+     * @param maze The maze the player is playing on.
+     */
     void show_maze(const mazes::Maze &maze);
 } // namespace mazes
 

@@ -11,6 +11,11 @@
 
 using namespace std;
 
+/**
+ * @brief Asks the user for the map he/she wants to play on.
+ * 
+ * @return The chosen maze's number.
+ */
 mazes::Maze ask_maze() {
     mazes::Maze maze;
 
@@ -42,6 +47,12 @@ mazes::Maze ask_maze() {
     return maze;
 }
 
+/**
+ * @brief Asks the user for a move to play.
+ * 
+ * @param maze The maze the player is playing on.
+ * @return A letter corresponding to the move.
+ */
 char ask_move(const mazes::Maze &maze) {
 
     char letter;
@@ -72,6 +83,11 @@ char ask_move(const mazes::Maze &maze) {
     return letter;
 }
 
+/**
+ * @brief Asks the user for his/her name.
+ * 
+ * @return The name provided by the user.
+ */
 string ask_name() {
     keyboard::Name name = { string() };
 
@@ -89,6 +105,9 @@ string ask_name() {
     return name.data;
 }
 
+/**
+ * @brief Plays the game.
+ */
 void play_game() {
     mazes::Maze maze = ask_maze();
     timer::start();

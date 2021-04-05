@@ -65,6 +65,14 @@ namespace files {
         return file;
     }
 
+    /**
+     * @brief Returns the requested maze's data.
+     * If the given maze file doesn't exist, can't be read or doesn't fulfill the expected format
+     * exceptions are thrown.
+     * 
+     * @param maze The number of the maze.
+     * @return The requested maze's data, if it exists.
+     */
     mazes::Maze read_maze(unsigned int maze) {
         ifstream file = files::open_file_reader(files::get_maze_file_name(maze));
 
@@ -132,6 +140,14 @@ namespace files {
         return { maze, width, height, cells, player, robots };
     }
 
+    /**
+     * @brief Writes the player's name and score in the winner's file. The entries are sorted in ascending score order.
+     * If the file doesn't exist or doesn't fulfill the expected format, exceptions are thrown.
+     * 
+     * @param maze The number of the maze.
+     * @param player_name The given player's name.
+     * @param player_score The player's score.
+     */
     void save_maze_score(unsigned int maze, string player_name, time_t player_score) {
         static const string HEADER1 = "Player          - Time";
         static const string HEADER2 = "----------------------";

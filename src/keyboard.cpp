@@ -120,7 +120,7 @@ namespace keyboard {
 
     /**
      * @brief Prompts the user to provide a value through console input.
-     * On interactive terminals, it will be done in a "fancy" fashing and in a single line.
+     * On interactive terminals, it will be done in a "fancy" fashion and in a single line.
      * Otherwise, it will be done in a more "traditional" manner. 
      * 
      * @param prompt The text that will be used to prompt the user for a value.
@@ -139,7 +139,7 @@ namespace keyboard {
 
     /**
      * @brief Prompts the user to provide a value through console input.
-     * On interactive terminals, it will be done in a "fancy" fashing and in a single line.
+     * On interactive terminals, it will be done in a "fancy" fashion and in a single line.
      * Otherwise, it will be done in a more "traditional" manner. 
      * 
      * @param prompt The text that will be used to prompt the user for a value.
@@ -156,6 +156,21 @@ namespace keyboard {
         return keyboard::read_value_adaptive<char>(prompt, warning, result, validator);
     }
 
+        /**
+     * @brief Prompts the user to provide a value through console input.
+     * On interactive terminals, it will be done in a "fancy" fashion and in a single line.
+     * Otherwise, it will be done in a more "traditional" manner. 
+     * 
+     * @param prompt The text that will be used to prompt the user for a value.
+     * @param warning The error message that will be presented to the user if the value could not be parsed or if the validator function returns false.
+     * @param result The variable where the result will be stored.
+     * @param validator An optional function that determines if the value is valid.
+     * This function is only executed after the parsing of the value was successful.
+     * If this function throws a string, it will be presented to the user as an error message.
+     * If this function returns false, the warning message will be presented to the user.
+     * 
+     * @return true, if the input is valid, or false, if cin has reached EOF. 
+     */
     bool read_value(const string prompt, const string warning, Name &result, const function<bool(Name)> validator) {
         return keyboard::read_value_adaptive<Name>(prompt, warning, result, validator);
     }
