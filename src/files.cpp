@@ -16,7 +16,7 @@ namespace files {
             throw "The provided maze number is invalid";
 
         string file_name = utf8::zfill(to_string(number), '0', 2, true);
-        return "/home/lima/university/FEUP-PROG-ROBOTS/mazes/MAZE_" + file_name + ".TXT";
+        return "MAZE_" + file_name + ".TXT";
     }
 
     /**
@@ -30,7 +30,7 @@ namespace files {
             throw "The provided maze number is invalid.";
 
         string file_name = utf8::zfill(to_string(number), '0', 2, true);
-        return "/home/lima/university/FEUP-PROG-ROBOTS/mazes/MAZE_" + file_name + "_WINNERS.TXT";
+        return "MAZE_" + file_name + "_WINNERS.TXT";
     }
 
     /**
