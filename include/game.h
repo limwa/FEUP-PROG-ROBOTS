@@ -1,8 +1,10 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include "mazes.h"
+
 /**
- * @brief Asks the user for the map he/she wants to play on.
+ * @brief Asks the uszer for the map he/she wants to play on.
  * 
  * @return The chosen maze's number.
  */
