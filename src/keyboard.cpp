@@ -60,7 +60,7 @@ namespace keyboard {
                 return true;
             } else {
                 if (!cin.eof())
-                    cout << ">> " << error << "\x1B[F";
+                    cout << ">> " << error << "\x1B[K\x1B[F";
 
                 cout << "\x1B[" << prompt.length() + 3 << "G\x1B[K";
 
