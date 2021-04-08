@@ -36,8 +36,6 @@ mazes::Maze ask_maze() {
         }
     );
 
-    cout << endl;
-
     if (number == 0)
         throw true;
 
@@ -75,8 +73,6 @@ char ask_move(const mazes::Maze &maze) {
         }
     );
 
-    cout << endl;
-
     if (!is_successful)
         throw false;
 
@@ -97,8 +93,6 @@ string ask_name() {
         name
     );
 
-    cout << endl;
-
     if (!is_successful)
         throw false;
 
@@ -110,6 +104,8 @@ string ask_name() {
  */
 void play_game() {
     mazes::Maze maze = ask_maze();
+    cout << endl;
+
     timer::start();
 
     try {
@@ -120,6 +116,8 @@ void play_game() {
             cout << endl;
 
             char move = ask_move(maze);
+            cout << endl;
+
             logic::player::move(maze, move);
 
             for (auto &robot : maze.robots) {
@@ -167,9 +165,9 @@ void play_game() {
         string name = ask_name();
         try {
             files::save_maze_score(maze.id, name, score);
-            cout << "Your score was saved!" << endl;
+            cout << "✓ Your score was saved!" << endl;
         } catch (const char *exception) {
-            cout << ">> Warning: " << exception << endl;
+            cout << ">> " << exception << endl;
         }
         
         cout << endl;
