@@ -98,10 +98,10 @@ namespace keyboard {
                 return true;
             } else {
                 if (cin.eof()) {
-                    cout << "EOF" << endl;
+                    cout << "EOF\n";
                     return false;
                 } else {
-                    cout << "\u26A0 " << error << endl;
+                    cout << ">> " << error << '\n' << endl;
                 }
             }
         }
@@ -112,8 +112,8 @@ namespace keyboard {
      */
     template <typename T>
     inline bool read_value_adaptive(const string prompt, const string warning, T &result, const function<bool(T)> validator = [] (T res) { return true; }) {
-        if (isatty(fileno(stdin)) && isatty(fileno(stdout)))
-            return keyboard::read_value_interactive<T>(prompt, warning, result, validator);
+        // if (isatty(fileno(stdin)) && isatty(fileno(stdout)))
+        //     return keyboard::read_value_interactive<T>(prompt, warning, result, validator);
         
         return keyboard::read_value_dinossaur<T>(prompt, warning, result, validator);
     }

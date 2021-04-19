@@ -36,11 +36,13 @@ mazes::Maze ask_maze() {
         }
     );
 
-    if (number == 0)
-        throw true;
+    cout << endl;
 
     if (!is_successful)
         throw false;
+
+    if (number == 0)
+        throw true;    
 
     return maze;
 }
@@ -73,6 +75,8 @@ char ask_move(const mazes::Maze &maze) {
         }
     );
 
+    cout << endl;
+
     if (!is_successful)
         throw false;
 
@@ -93,6 +97,8 @@ string ask_name() {
         name
     );
 
+    cout << endl;
+
     if (!is_successful)
         throw false;
 
@@ -104,7 +110,6 @@ string ask_name() {
  */
 void play_game() {
     mazes::Maze maze = ask_maze();
-    cout << endl;
 
     timer::start();
 
@@ -116,7 +121,6 @@ void play_game() {
             cout << endl;
 
             char move = ask_move(maze);
-            cout << endl;
 
             logic::player::move(maze, move);
 
@@ -170,7 +174,7 @@ void play_game() {
             cout << ">> " << exception << endl;
         }
         
-        cout << endl;
+        cout << endl << endl;
         keyboard::wait_for_enter();
 
         throw true; // Make sure to free memory and restart game

@@ -92,6 +92,9 @@ namespace files {
         char ch;
         size_t index = 0;
         while (file.get(ch)) {
+            if (ch == '\r')
+                continue;
+
             if (ch == '\n') {
                 if (index % width != 0) {
                     free(cells);
@@ -106,7 +109,13 @@ namespace files {
                 throw "The given file does not fulfill the expected format";
             }
 
-            unsigned int value = mazes::translate_to_cell_value(ch);
+            unsigned int value;
+            try {
+                value = mazes::translate_to_cell_value(ch);
+            } catch (...) {
+                free(cells);
+                throw "The given file does not fulfill the expected format";
+            }
 
             size_t x = index % width;
             size_t y = index / width;

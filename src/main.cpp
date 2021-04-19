@@ -21,7 +21,6 @@ int main(int, char**) {
             option = 0; // Exits the program
         
         cout << endl;
-
         
         string line;
 
