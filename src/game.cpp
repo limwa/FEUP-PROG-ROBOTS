@@ -174,7 +174,7 @@ void play_game() {
             cout << ">> " << exception << endl;
         }
         
-        cout << endl << endl;
+        cout << endl;
         keyboard::wait_for_enter();
 
         throw true; // Make sure to free memory and restart game
