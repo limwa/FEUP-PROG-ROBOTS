@@ -13,7 +13,7 @@ namespace keyboard {
         name.data.clear();
         
         char ch;
-        while ((istream.peek() != '\n' && istream.get(ch)) && utf8::length(name.data) < 15)
+        while (((istream.peek() != '\r' || istream.peek() != '\n') && istream.get(ch)) && utf8::length(name.data) < 15)
             name.data.push_back(ch);
 
         return istream;
