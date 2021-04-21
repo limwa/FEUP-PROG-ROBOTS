@@ -85,10 +85,10 @@ namespace logic {
                 return false;
 
             unsigned int value = mazes::get_cell_value_at(maze, new_x, new_y);
-            if (mazes::is_cell_robot(value) || mazes::is_cell_barrier(value))
+            if (mazes::is_cell_robot(value))
                 return false;
 
-            return true;    
+            return true;
         }
 
         /**
@@ -119,12 +119,25 @@ namespace logic {
             int new_x = maze.player.x + dx;
             int new_y = maze.player.y + dy;
 
-            mazes::get_cell_value_at_player_position(maze) &= ~mazes::masks::HUMAN;
-            
+            unsigned int& current_value = mazes::get_cell_value_at_player_position(maze);
+            unsigned int& new_value = mazes::get_cell_value_at(maze, new_x, new_y);
+
             maze.player.x = new_x;
             maze.player.y = new_y;
 
-            mazes::get_cell_value_at_player_position(maze) |= mazes::masks::HUMAN;
+            current_value &= ~mazes::masks::HUMAN; // Move the player
+
+            if (mazes::is_cell_barrier(new_value)) {
+                new_value &= ~mazes::masks::BARRIER; // Remove the barrier
+                new_value |= mazes::masks::HUMAN | mazes::masks::DEAD; // Finish moving the player and kill it
+            } /* else if (mazes::is_cell_robot(new_value)) {
+                if (!mazes::is_cell_dead(new_value)) { // If the robot in the new position is alive
+                    new_value &= ~mazes::masks::ROBOT; // Remove the robot
+                    new_value |= mazes::masks::HUMAN | mazes::masks::DEAD; // Finish moving the player and kill it
+                }
+            } */ else {
+                new_value |= mazes::masks::HUMAN; // Finish moving the player
+            }
         }
 
         /**
@@ -195,10 +208,13 @@ namespace logic {
                 return;
 
             if (mazes::is_cell_barrier(new_value)) {
-                if (!mazes::is_cell_dead(new_value)) { // If the barrier is powered
-                    current_value |= mazes::masks::DEAD; // Kill robot
-                    new_value |= mazes::masks::DEAD; // Make barrier unpowered
-                }
+                current_value &= ~mazes::masks::ROBOT; // Move the robot
+                new_value &= ~mazes::masks::BARRIER; // Remove the barrier
+
+                new_value |= mazes::masks::ROBOT | mazes::masks::DEAD; // Finish moving the robot and kill it
+
+                robot.x = new_x;
+                robot.y = new_y;
             } else if (mazes::is_cell_robot(new_value)) {
                 if (mazes::is_cell_dead(new_value)) { // If the robot in the new position is dead
                     current_value |= mazes::masks::DEAD;

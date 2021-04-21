@@ -124,6 +124,11 @@ void play_game() {
 
             logic::player::move(maze, move);
 
+            if (mazes::is_cell_dead(mazes::get_cell_value_at_player_position(maze))) {
+                has_player_won = false;
+                break;
+            }
+
             for (auto &robot : maze.robots) {
                 logic::robot::move(maze, robot);
             }
