@@ -85,7 +85,7 @@ namespace logic {
                 return false;
 
             unsigned int value = mazes::get_cell_value_at(maze, new_x, new_y);
-            if (mazes::is_cell_robot(value))
+            if (mazes::is_cell_robot(value) && mazes::is_cell_dead(value))
                 return false;
 
             return true;
@@ -130,12 +130,12 @@ namespace logic {
             if (mazes::is_cell_barrier(new_value)) {
                 new_value &= ~mazes::masks::BARRIER; // Remove the barrier
                 new_value |= mazes::masks::HUMAN | mazes::masks::DEAD; // Finish moving the player and kill it
-            } /* else if (mazes::is_cell_robot(new_value)) {
+            } else if (mazes::is_cell_robot(new_value)) {
                 if (!mazes::is_cell_dead(new_value)) { // If the robot in the new position is alive
                     new_value &= ~mazes::masks::ROBOT; // Remove the robot
                     new_value |= mazes::masks::HUMAN | mazes::masks::DEAD; // Finish moving the player and kill it
                 }
-            } */ else {
+            } else {
                 new_value |= mazes::masks::HUMAN; // Finish moving the player
             }
         }

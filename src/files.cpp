@@ -92,8 +92,14 @@ namespace files {
         char ch;
         size_t index = 0;
         while (file.get(ch)) {
-            if (ch == '\r')
+            if (ch == '\r') {
+                if (file.peek() != '\n') {
+                    free(cells);
+                    throw "The given file does not fulfill the expected format";
+                }
+
                 continue;
+            }
 
             if (ch == '\n') {
                 if (index % width != 0) {
@@ -196,7 +202,7 @@ namespace files {
                     throw "The given file does not fulfill the expected format";
 
                 string name = utf8::rtrim(line.substr(0, start_of_separator));
-                time_t score = stoi(line.substr(start_of_score, 4));
+                time_t score = stol(line.substr(start_of_score, 4));
 
                 scores.push_back({ name, score });
             }
