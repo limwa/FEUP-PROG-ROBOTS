@@ -174,7 +174,7 @@ void play_game() {
         string name = ask_name();
         try {
             files::save_maze_score(maze.id, name, score);
-            cout << "✓ Your score was saved!" << endl;
+            cout << ">> Your score was saved!" << endl;
         } catch (const char *exception) {
             cout << ">> " << exception << endl;
         }
