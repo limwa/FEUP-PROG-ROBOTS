@@ -75,84 +75,84 @@ namespace files {
      */
     mazes::Maze read_maze(unsigned int maze) {
         ifstream file = files::open_file_reader(files::get_maze_file_name(maze));
-
-        char sep;
-        size_t width, height;
-        file >> width >> sep >> height;
-        if (sep != 'x' || width == 0 || height == 0 || file.bad())
-            throw "The given file does not fulfill the expected format";
-
-        unsigned int* cells = (unsigned int*) malloc(width * height * sizeof(unsigned int));//TODO: free(cells); !!!!!!!!!!!!!!!!!
         
-        mazes::Player player;
-        bool has_found_player = false;
-
-        vector<mazes::Robot> robots;
-        
-        char ch;
-        size_t index = 0;
-        while (file.get(ch)) {
-            if (ch == '\r') {
-                if (file.peek() != '\n') {
-                    free(cells);
-                    throw "The given file does not fulfill the expected format";
-                }
-
-                continue;
-            }
-
-            if (ch == '\n') {
-                if (index % width != 0) {
-                    free(cells);
-                    throw "The given file does not fulfill the expected format";
-                }
-
-                continue;
-            }
-
-            if (index >= width * height) {
-                free(cells);
+        try {
+            char sep;
+            size_t width, height;
+            file >> width >> sep >> height;
+            if (sep != 'x' || width == 0 || height == 0 || file.bad())
                 throw "The given file does not fulfill the expected format";
-            }
 
-            unsigned int value;
+            unsigned int* cells = (unsigned int*) malloc(width * height * sizeof(unsigned int));//TODO: free(cells); !!!!!!!!!!!!!!!!!
+            
             try {
-                value = mazes::translate_to_cell_value(ch);
-            } catch (...) {
-                free(cells);
-                throw "The given file does not fulfill the expected format";
-            }
+                mazes::Player player;
+                bool has_found_player = false;
 
-            size_t x = index % width;
-            size_t y = index / width;
+                vector<mazes::Robot> robots;
+                
+                char ch;
+                size_t index = 0;
+                while (file.get(ch)) {
+                    if (ch == '\r') {
+                        if (file.peek() != '\n')
+                            throw "The given file does not fulfill the expected format";
 
-            if (mazes::is_cell_human(value)) {
-                if (!has_found_player) {
-                    player.x = x;
-                    player.y = y;
+                        continue;
+                    }
 
-                    has_found_player = true;
-                } else {
-                    free(cells);
-                    throw "The given file does not fulfill the expected format";
+                    if (ch == '\n') {
+                        if (index % width != 0)
+                            throw "The given file does not fulfill the expected format";
+
+                        continue;
+                    }
+
+                    if (index >= width * height)
+                        throw "The given file does not fulfill the expected format";
+
+                    unsigned int value;
+                    try {
+                        value = mazes::translate_to_cell_value(ch);
+                    } catch (...) {
+                        throw "The given file does not fulfill the expected format";
+                    }
+
+                    size_t x = index % width;
+                    size_t y = index / width;
+
+                    if (mazes::is_cell_human(value)) {
+                        if (!has_found_player) {
+                            player.x = x;
+                            player.y = y;
+
+                            has_found_player = true;
+                        } else
+                            throw "The given file does not fulfill the expected format";
+
+                    } else if (mazes::is_cell_robot(value)) {
+                        robots.push_back({
+                            robots.size() + 1, // Robot IDs start at 1
+                            x, y
+                        });
+                    }
+
+                    cells[index++] = value;
                 }
-            } else if (mazes::is_cell_robot(value)) {
-                robots.push_back({
-                    robots.size() + 1, // Robot IDs start at 1
-                    x, y
-                });
+
+                if (!has_found_player || index < width * height)
+                    throw "The given file does not fulfill the expected format";
+
+                file.close();
+                return { maze, width, height, cells, player, robots };
+            } catch (const char* ex) {
+                free(cells);
+                throw ex;
             }
-
-            cells[index++] = value;
-        }
-
-        if (!has_found_player || index < width * height) {
-            free(cells);
-            throw "The given file does not fulfill the expected format";
-        }
-
-        file.close();
-        return { maze, width, height, cells, player, robots };
+        } catch (const char* ex) {
+            file.close();
+            throw ex;
+        } 
     }
 
     /**
@@ -180,34 +180,39 @@ namespace files {
 
             ifstream file_reader = files::open_file_reader(winners_file_name);
 
-            string line;
-            getline(file_reader, line);
-            if (line != HEADER1)
-                throw "The given file does not fulfill the expected format";
-
-            getline(file_reader, line);
-            if (line != HEADER2)
-                throw "The given file does not fulfill the expected format";
-
-            while (getline(file_reader, line)) {
-                size_t length = utf8::length(line);
-                if (length != utf8::length(HEADER1))
+            try {
+                string line;
+                getline(file_reader, line);
+                if (line != HEADER1)
                     throw "The given file does not fulfill the expected format";
 
-                size_t start_of_score = line.length() - 4; // Score has 4 characters
-                size_t start_of_separator = start_of_score - 3;
+                getline(file_reader, line);
+                if (line != HEADER2)
+                    throw "The given file does not fulfill the expected format";
+
+                while (getline(file_reader, line)) {
+                    size_t length = utf8::length(line);
+                    if (length != utf8::length(HEADER1))
+                        throw "The given file does not fulfill the expected format";
+
+                    size_t start_of_score = line.length() - 4; // Score has 4 characters
+                    size_t start_of_separator = start_of_score - 3;
+                    
+                    string sep = line.substr(start_of_separator, 3);
+                    if (sep != " - ")
+                        throw "The given file does not fulfill the expected format";
+
+                    string name = utf8::rtrim(line.substr(0, start_of_separator));
+                    time_t score = stol(line.substr(start_of_score, 4));
+
+                    scores.push_back({ name, score });
+                }
                 
-                string sep = line.substr(start_of_separator, 3);
-                if (sep != " - ")
-                    throw "The given file does not fulfill the expected format";
-
-                string name = utf8::rtrim(line.substr(0, start_of_separator));
-                time_t score = stol(line.substr(start_of_score, 4));
-
-                scores.push_back({ name, score });
+                file_reader.close();
+            } catch (const char* ex) {
+                file_reader.close();
+                throw ex;
             }
-            
-            file_reader.close();
         } catch (...) {
             scores.clear();
         }
